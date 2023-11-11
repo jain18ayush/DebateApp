@@ -5,31 +5,29 @@ from streamlit_webrtc import webrtc_streamer
 import av
 
 
+import tempfile
+import shutil
+import os
 
-def upload_video(uploaded_file):
-    tfile = tempfile.NamedTemporaryFile(delete=False) 
-    tfile.write(uploaded_file.read())
 
-    video_file_path = tfile.name  # Get the file path of the temporary file
-    model.processAudio(video_file_path)
+def upload_audio(uploaded_file):
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.m4a') as tfile:
+        tfile.write(uploaded_file.read())
+        temp_file_path = tfile.name  # Get the file path of the temporary file
+
+    # Process the audio file
+    result = model.processAudio(temp_file_path)
+    st.write(result)
+    critique = model.critiqueSpeech(result)
+    st.write( "\n" + critique)
+
+    # Clean up the temporary file
+    os.remove(temp_file_path)
+
 
 st.write("DebateMe")
 
-uploaded_file = st.file_uploader("Choose a audio file", type=["mp3", "wav", "m4a"])
+uploaded_file = st.file_uploader(
+    "Choose a audio file", type=["mp3", "wav", "m4a"])
 if uploaded_file is not None:
-    upload_video(uploaded_file)
-
-#For real time streaming 
-# def video_frame_callback(frame):
-#     img = frame.to_ndarray(format="bgr24")
-
-#     flipped = img[::-1,:,:]
-
-#     return av.VideoFrame.from_ndarray(flipped, format="bgr24")
-
-
-# webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
-
-st.write("TRANSCRIPT");
-
-st.write("Here are some tips to help out!")
+    upload_audio(uploaded_file)

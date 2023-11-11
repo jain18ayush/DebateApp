@@ -1,23 +1,7 @@
 
 from openai import OpenAI
-from dotenv import load_dotenv
-import os
 
-
-def load_env_variables(env_file):
-    with open(env_file) as f:
-        for line in f:
-            if line.startswith('#') or not line.strip():
-                # Skip comments and empty lines
-                continue
-            # Parse the key-value pair and set it as environment variable
-            key, value = line.strip().split('=', 1)
-            os.environ[key] = value
-
-env_file_path = '.env'
-load_env_variables(env_file_path)
-
-client = OpenAI(os.getenv('OPENAI_API_KEY'))
+client = OpenAI()
 
 def processAudio(filePath):
   audio_file = open(filePath, "rb")
@@ -26,9 +10,17 @@ def processAudio(filePath):
       file=audio_file,
       response_format="text"
   )
-
-  print(transcript);
   return transcript; 
 
+def critiqueSpeech(text):
+  response = client.chat.completions.create(
+    model="gpt-3.5-turbo-1106",
+    response_format={ "type": "json_object" },
+    messages=[
+      {"role": "system", "content": "You are a helpful debate judge designed to output JSON. Make sure that you judge the arguments provided harshly and with constructive criticism"},
+      {"role": "user", "content": text}
+    ]
+  )
 
-
+  print(response.choices[0].message.content)
+  return response.choices[0].message.content
